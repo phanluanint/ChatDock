@@ -9,8 +9,17 @@ interface TrackedWebview {
 class WebviewManagerService {
   private activeWebviews: Map<string, TrackedWebview> = new Map();
 
-  register(label: string, webview: Webview, model: AIModel) {
+  async register(label: string, webview: Webview, model: AIModel) {
     console.log(`[WebviewManager] Registering ${label} for model ${model}`);
+
+    // Enforce singleton: Close any other existing webviews for this model
+    for (const [existingLabel, tracked] of this.activeWebviews.entries()) {
+      if (tracked.model === model && existingLabel !== label) {
+        console.log(`[WebviewManager] Found conflict: ${existingLabel} already exists for ${model}. Closing it to enforce singleton.`);
+        await this.close(existingLabel);
+      }
+    }
+
     this.activeWebviews.set(label, { webview, model });
   }
 

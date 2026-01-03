@@ -116,7 +116,7 @@ export const useWebviewWindow = (model: AIModel, isActive: boolean): UseWebviewW
       });
 
       // Register with Manager - PASS MODEL ID NOW
-      WebviewManager.register(label, webview, model);
+      await WebviewManager.register(label, webview, model);
       webviewRef.current = webview;
 
       // Event listeners
