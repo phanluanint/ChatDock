@@ -1,20 +1,90 @@
+# ChatDock
+
 <div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+  <img src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" alt="ChatDock Banner" width="100%" />
+  <br />
+  <br />
+
+  [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+  [![Tauri](https://img.shields.io/badge/built%20with-Tauri-24C8DB.svg)](https://tauri.app/)
+  [![React](https://img.shields.io/badge/frontend-React-61DAFB.svg)](https://reactjs.org/)
+  [![TypeScript](https://img.shields.io/badge/language-TypeScript-3178C6.svg)](https://www.typescriptlang.org/)
 </div>
 
-# Run and deploy your AI Studio app
+<div align="center">
+  <h3>The All-in-One AI Desktop Workspace</h3>
+  <p>Seamlessly access and compare ChatGPT, Claude, and Gemini in a single, unified interface.</p>
+</div>
 
-This contains everything you need to run your app locally.
+---
 
-View your app in AI Studio: https://ai.studio/apps/drive/1nCTxn34gYOa88OJDBvd9e777pUaVde8Q
+## 🚀 Features
 
-## Run Locally
+- **Unified Interface**: Access multiple AI models (ChatGPT, Claude, Gemini) without tab switching.
+- **Compare Mode**: Run prompts in parallel across different models to compare responses side-by-side.
+- **Privacy First**: Built with [Tauri](https://tauri.app/), your data stays local. API keys are stored securely on your device.
+- **Modern UI**: specialized dark mode design with glassmorphism effects for a premium desktop experience.
+- **Flexible Integration**: Supports both web-view based interaction and direct API integration (Gemini).
 
-**Prerequisites:**  Node.js
+## 🛠 Tech Stack
 
+- **Core**: [Rust](https://www.rust-lang.org/) & [Tauri v2](https://tauri.app/)
+- **Frontend**: [React v19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
+- **Build Tool**: [Vite](https://vitejs.dev/)
+- **Styling**: Tailwind CSS & Lucide Icons
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 🏁 Getting Started
+
+### Prerequisites
+
+Ensure you have the following installed:
+- **Node.js** (v18 or later)
+- **Rust** (stable) & Cargo ([Installation Guide](https://www.rust-lang.org/tools/install))
+- **pnpm** (recommended) or npm
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/chatdock.git
+   cd chatdock
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server**
+   ```bash
+   npm run tauri:dev
+   ```
+
+4. **Configure Gemini API**
+   To use Gemini via API:
+   - Get your key from [Google AI Studio](https://makersuite.google.com/app/apikey).
+   - Click the **Settings** (gear icon) in the app top-right corner.
+   - Enter your API Key.
+
+## 📦 Building for Production
+
+To create a standalone executable for your OS (macOS, Windows, or Linux):
+
+```bash
+npm run tauri:build
+```
+The output binary will be located in `src-tauri/target/release/bundle/`.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
