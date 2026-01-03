@@ -115,67 +115,70 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
           </div>
         )}
 
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-          >
-            {msg.role !== 'user' && (
-              <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/20">
-                <Sparkles size={14} className="text-purple-400" />
-              </div>
-            )}
-            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
-              ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg'
-              : 'bg-white/5 text-gray-300 border border-white/10 rounded-tl-none'
-              }`}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  code({ node, inline, className, children, ...props }: any) {
-                    const match = /language-(\w+)/.exec(className || '')
-                    return !inline && match ? (
-                      <SyntaxHighlighter
-                        {...props}
-                        style={vscDarkPlus}
-                        language={match[1]}
-                        PreTag="div"
-                        ref={null}
-                        className="rounded-md !bg-black/50 !p-3 !m-0 overflow-x-auto"
-                      >
-                        {String(children).replace(/\n$/, '')}
-                      </SyntaxHighlighter>
-                    ) : (
-                      <code {...props} className={`${className} bg-black/20 rounded px-1 py-0.5 font-mono text-xs`}>
-                        {children}
-                      </code>
-                    )
-                  },
-                  a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline" />,
-                  ul: ({ node, ...props }) => <ul {...props} className="list-disc list-inside space-y-1 mb-2" />,
-                  ol: ({ node, ...props }) => <ol {...props} className="list-decimal list-inside space-y-1 mb-2" />,
-                  h1: ({ node, ...props }) => <h1 {...props} className="text-xl font-bold mb-2 mt-4 first:mt-0" />,
-                  h2: ({ node, ...props }) => <h2 {...props} className="text-lg font-bold mb-2 mt-3 first:mt-0" />,
-                  h3: ({ node, ...props }) => <h3 {...props} className="text-md font-bold mb-1 mt-2 first:mt-0" />,
-                  p: ({ node, ...props }) => <p {...props} className="mb-2 last:mb-0" />,
-                  blockquote: ({ node, ...props }) => <blockquote {...props} className="border-l-2 border-gray-500 pl-4 py-1 italic my-2 bg-white/5" />,
-                  table: ({ node, ...props }) => <div className="overflow-x-auto my-2"><table {...props} className="min-w-full text-left text-sm" /></div>,
-                  thead: ({ node, ...props }) => <thead {...props} className="bg-white/10" />,
-                  th: ({ node, ...props }) => <th {...props} className="px-3 py-2 border-b border-white/10 font-semibold" />,
-                  td: ({ node, ...props }) => <td {...props} className="px-3 py-2 border-b border-white/5" />,
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
-            </div>
-            {msg.role === 'user' && (
-              <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
-                <User size={14} className="text-gray-400" />
-              </div>
-            )}
-          </div>
-        ))}
+        {messages.map((msg) => {
+          if (!msg.content) return null;
 
+          return (
+            <div
+              key={msg.id}
+              className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            >
+              {msg.role !== 'user' && (
+                <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/20">
+                  <Sparkles size={14} className="text-purple-400" />
+                </div>
+              )}
+              <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
+                ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg'
+                : 'bg-white/5 text-gray-300 border border-white/10 rounded-tl-none'
+                }`}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code({ node, inline, className, children, ...props }: any) {
+                      const match = /language-(\w+)/.exec(className || '')
+                      return !inline && match ? (
+                        <SyntaxHighlighter
+                          {...props}
+                          style={vscDarkPlus}
+                          language={match[1]}
+                          PreTag="div"
+                          ref={null}
+                          className="rounded-md !bg-black/50 !p-3 !m-0 overflow-x-auto"
+                        >
+                          {String(children).replace(/\n$/, '')}
+                        </SyntaxHighlighter>
+                      ) : (
+                        <code {...props} className={`${className} bg-black/20 rounded px-1 py-0.5 font-mono text-xs`}>
+                          {children}
+                        </code>
+                      )
+                    },
+                    a: ({ node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline" />,
+                    ul: ({ node, ...props }) => <ul {...props} className="list-disc list-inside space-y-1 mb-2" />,
+                    ol: ({ node, ...props }) => <ol {...props} className="list-decimal list-inside space-y-1 mb-2" />,
+                    h1: ({ node, ...props }) => <h1 {...props} className="text-xl font-bold mb-2 mt-4 first:mt-0" />,
+                    h2: ({ node, ...props }) => <h2 {...props} className="text-lg font-bold mb-2 mt-3 first:mt-0" />,
+                    h3: ({ node, ...props }) => <h3 {...props} className="text-md font-bold mb-1 mt-2 first:mt-0" />,
+                    p: ({ node, ...props }) => <p {...props} className="mb-2 last:mb-0" />,
+                    blockquote: ({ node, ...props }) => <blockquote {...props} className="border-l-2 border-gray-500 pl-4 py-1 italic my-2 bg-white/5" />,
+                    table: ({ node, ...props }) => <div className="overflow-x-auto my-2"><table {...props} className="min-w-full text-left text-sm" /></div>,
+                    thead: ({ node, ...props }) => <thead {...props} className="bg-white/10" />,
+                    th: ({ node, ...props }) => <th {...props} className="px-3 py-2 border-b border-white/10 font-semibold" />,
+                    td: ({ node, ...props }) => <td {...props} className="px-3 py-2 border-b border-white/5" />,
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              </div>
+              {msg.role === 'user' && (
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center shrink-0 border border-white/20">
+                  <User size={14} className="text-gray-400" />
+                </div>
+              )}
+            </div>
+          )
+        })}
         {isLoading && (
           <div className="flex gap-3 justify-start">
             <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/20">

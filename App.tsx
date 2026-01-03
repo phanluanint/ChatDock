@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import ChatWindow from './components/ChatWindow';
 import { AIModel, Message, AppSettings } from './types';
-import { getGeminiResponse } from './services/gemini';
+import { streamGeminiResponse } from './services/gemini';
 import { WebviewManager } from './services/WebviewManager';
 
 // AI Model configurations with brand colors
@@ -202,17 +202,34 @@ const App: React.FC = () => {
         parts: [{ text: m.content }]
       }));
 
-      const response = await getGeminiResponse(content, history, settings.geminiApiKey);
-
-      const assistantMsg: Message = {
-        id: (Date.now() + 1).toString(),
+      // Create placeholder assistant message
+      const assistantMsgId = (Date.now() + 1).toString();
+      const initialAssistantMsg: Message = {
+        id: assistantMsgId,
         role: 'assistant',
-        content: response || 'No response from AI.',
+        content: '', // Start empty
         timestamp: Date.now(),
         model: AIModel.GEMINI_API
       };
 
-      setGeminiMessages(prev => [...prev, assistantMsg]);
+      setGeminiMessages(prev => [...prev, initialAssistantMsg]);
+
+      await streamGeminiResponse(
+        content,
+        history,
+        (chunk) => {
+          setGeminiMessages(prev => {
+            return prev.map(msg => {
+              if (msg.id === assistantMsgId) {
+                return { ...msg, content: msg.content + chunk };
+              }
+              return msg;
+            });
+          });
+        },
+        settings.geminiApiKey
+      );
+
       setIsLoading(false);
     }
   }, [geminiMessages, settings.geminiApiKey]);
