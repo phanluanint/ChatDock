@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "aio-ai-chat",
+  "productName": "OmniAI",
   "version": "0.1.0",
   "identifier": "com.tauri.dev",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "aio-ai-chat",
+        "title": "OmniAI",
         "width": 1440,
         "height": 900,
         "resizable": true,

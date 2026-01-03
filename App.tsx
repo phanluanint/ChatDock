@@ -150,7 +150,7 @@ const SettingsModal: React.FC<{
 };
 
 const App: React.FC = () => {
-  const [activeModel, setActiveModel] = useState<AIModel>(AIModel.GEMINI_API);
+  const [activeModel, setActiveModel] = useState<AIModel>(AIModel.CHATGPT);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
