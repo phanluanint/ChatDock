@@ -13,6 +13,7 @@ import {
 import ChatWindow from './components/ChatWindow';
 import { AIModel, Message, AppSettings } from './types';
 import { getGeminiResponse } from './services/gemini';
+import { WebviewManager } from './services/WebviewManager';
 
 // AI Model configurations with brand colors
 const AI_MODELS = [
@@ -151,6 +152,7 @@ const SettingsModal: React.FC<{
 
 const App: React.FC = () => {
   const [activeModel, setActiveModel] = useState<AIModel>(AIModel.CHATGPT);
+  const [selectedModels, setSelectedModels] = useState<AIModel[]>([AIModel.CHATGPT, AIModel.CLAUDE]);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -169,6 +171,15 @@ const App: React.FC = () => {
   // State for Gemini API chat
   const [geminiMessages, setGeminiMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Effect to clean up webviews when switching to non-webview modes
+  useEffect(() => {
+    // If we are in single mode and the active model is NOT a webview (e.g. Gemini API),
+    // force close all webviews to ensure cleanliness.
+    if (!isCompareMode && activeModel === AIModel.GEMINI_API) {
+      WebviewManager.closeAll();
+    }
+  }, [isCompareMode, activeModel]);
 
   const handleSendMessage = useCallback(async (content: string, model: AIModel) => {
     const userMsg: Message = {
@@ -217,14 +228,26 @@ const App: React.FC = () => {
         <div className="flex items-center gap-1">
           {AI_MODELS.map((model) => {
             const Icon = model.icon;
-            const isActive = !isCompareMode && activeModel === model.id;
+            const isActive = isCompareMode
+              ? selectedModels.includes(model.id)
+              : activeModel === model.id;
 
             return (
               <button
                 key={model.id}
                 onClick={() => {
-                  setActiveModel(model.id);
-                  setIsCompareMode(false);
+                  if (isCompareMode) {
+                    setSelectedModels(prev => {
+                      if (prev.includes(model.id)) {
+                        return prev.length === 1 ? prev : prev.filter(id => id !== model.id);
+                      }
+                      const newSelection = [...prev, model.id];
+                      return newSelection.length > 2 ? newSelection.slice(1) : newSelection;
+                    });
+                  } else {
+                    setActiveModel(model.id);
+                    setIsCompareMode(false);
+                  }
                 }}
                 className={`
                   flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200
@@ -250,7 +273,17 @@ const App: React.FC = () => {
         {/* Right: Compare mode toggle and Settings */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsCompareMode(!isCompareMode)}
+            onClick={() => {
+              if (!isCompareMode) {
+                // Ensure active model is selected when entering compare mode
+                setSelectedModels(prev => {
+                  if (prev.includes(activeModel)) return prev;
+                  const newSelection = [...prev, activeModel];
+                  return newSelection.length > 2 ? newSelection.slice(1) : newSelection;
+                });
+              }
+              setIsCompareMode(!isCompareMode);
+            }}
             className={`
               flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 text-sm font-medium
               ${isCompareMode
@@ -282,7 +315,7 @@ const App: React.FC = () => {
         {isCompareMode ? (
           /* Compare Mode - Grid of all AI services */
           <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3">
-            {AI_MODELS.map((model) => (
+            {AI_MODELS.filter(m => selectedModels.includes(m.id)).map((model) => (
               <ChatWindow
                 key={`compare-${model.id}`}
                 model={model.id}

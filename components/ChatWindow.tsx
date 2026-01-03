@@ -19,21 +19,18 @@ interface ChatWindowProps {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage, isLoading }) => {
   const [input, setInput] = useState('');
-  const [isTauriEnv, setIsTauriEnv] = useState(false);
-  const [isWebviewActive, setIsWebviewActive] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Synchronous check for initial state to avoid flicker
+  const [isTauriEnv] = useState(() => checkIsTauri());
 
-  // Check Tauri environment on mount
-  useEffect(() => {
-    setIsTauriEnv(checkIsTauri());
-  }, []);
+  // Derived state for webview mode
+  const isNativeApiSupport = model === AIModel.GEMINI_API;
+  const canEmbedWebview = isTauriEnv && !isNativeApiSupport;
 
-  // Auto-load webview for web-based models in Tauri environment
-  useEffect(() => {
-    const isWebviewModel = model !== AIModel.GEMINI_API;
-    const shouldAutoLoad = isTauriEnv && isWebviewModel;
-    setIsWebviewActive(shouldAutoLoad);
-  }, [model, isTauriEnv]);
+  // We can just use a boolean for the view mode, no need for complex effects
+  // If it's an embedded model and we are in Tauri, show webview.
+  // Otherwise show native chat (or "not supported" message if implied).
+  const showWebview = canEmbedWebview;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -58,17 +55,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
     }
   };
 
-  const isNativeApiSupport = model === AIModel.GEMINI_API;
-  const canEmbedWebview = isTauriEnv && !isNativeApiSupport;
-
   // Show embedded webview when active
-  if (isWebviewActive && canEmbedWebview) {
+  if (showWebview) {
     return (
       <EmbeddedWebview
         key={`webview-${model}`}
         model={model}
         isActive={true}
-        onClose={() => setIsWebviewActive(false)}
       />
     );
   }
@@ -92,15 +85,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
               }
             </p>
             <button
-              onClick={() => {
-                if (canEmbedWebview) {
-                  setIsWebviewActive(true);
-                }
-              }}
-              className="mt-6 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
+              disabled={true}
+              className="mt-6 px-5 py-2.5 bg-white/5 text-gray-500 rounded-xl text-sm font-medium cursor-not-allowed flex items-center gap-2 border border-white/10"
             >
               <Play size={16} />
-              Load {getModelTitle()} Here
+              Not Available in Browser
             </button>
           </div>
         )}
