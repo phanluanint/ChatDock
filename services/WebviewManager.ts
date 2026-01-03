@@ -1,11 +1,17 @@
 import { Webview } from '@tauri-apps/api/webview';
+import { AIModel } from '../types';
+
+interface TrackedWebview {
+  webview: Webview;
+  model: AIModel;
+}
 
 class WebviewManagerService {
-  private activeWebviews: Map<string, Webview> = new Map();
+  private activeWebviews: Map<string, TrackedWebview> = new Map();
 
-  register(label: string, webview: Webview) {
-    console.log(`[WebviewManager] Registering ${label}`);
-    this.activeWebviews.set(label, webview);
+  register(label: string, webview: Webview, model: AIModel) {
+    console.log(`[WebviewManager] Registering ${label} for model ${model}`);
+    this.activeWebviews.set(label, { webview, model });
   }
 
   unregister(label: string) {
@@ -14,11 +20,11 @@ class WebviewManagerService {
   }
 
   async close(label: string) {
-    const webview = this.activeWebviews.get(label);
-    if (webview) {
+    const tracked = this.activeWebviews.get(label);
+    if (tracked) {
       console.log(`[WebviewManager] Closing ${label}`);
       try {
-        await webview.close();
+        await tracked.webview.close();
       } catch (err) {
         console.warn(`[WebviewManager] Failed to close ${label}:`, err);
       }
@@ -26,21 +32,30 @@ class WebviewManagerService {
     }
   }
 
+  /**
+   * Ensures only webviews for the currently active models remain open.
+   * Closes any webview whose model is NOT in the activeModels list.
+   */
+  async reconcile(activeModels: AIModel[]) {
+    console.log(`[WebviewManager] Reconciling: Active models are [${activeModels.join(', ')}]`);
+    const promises: Promise<void>[] = [];
+
+    for (const [label, tracked] of this.activeWebviews.entries()) {
+      if (!activeModels.includes(tracked.model)) {
+        console.log(`[WebviewManager] Label ${label} (Model ${tracked.model}) is no longer active. Closing...`);
+        promises.push(this.close(label));
+      }
+    }
+
+    await Promise.all(promises);
+  }
+
   async closeAll() {
     console.log(`[WebviewManager] Closing ALL webviews (${this.activeWebviews.size} active)`);
     const promises: Promise<void>[] = [];
 
-    for (const [label, webview] of this.activeWebviews.entries()) {
-      promises.push(
-        (async () => {
-          try {
-            await webview.close();
-            console.log(`[WebviewManager] Closed ${label}`);
-          } catch (err) {
-            console.warn(`[WebviewManager] Failed to close ${label}:`, err);
-          }
-        })()
-      );
+    for (const label of this.activeWebviews.keys()) {
+      promises.push(this.close(label));
     }
 
     await Promise.all(promises);

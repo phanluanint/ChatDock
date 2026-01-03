@@ -172,14 +172,11 @@ const App: React.FC = () => {
   const [geminiMessages, setGeminiMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Effect to clean up webviews when switching to non-webview modes
+  // RECONCILE: Ensure only active model webviews are open
   useEffect(() => {
-    // If we are in single mode and the active model is NOT a webview (e.g. Gemini API),
-    // force close all webviews to ensure cleanliness.
-    if (!isCompareMode && activeModel === AIModel.GEMINI_API) {
-      WebviewManager.closeAll();
-    }
-  }, [isCompareMode, activeModel]);
+    const currentActiveModels = isCompareMode ? selectedModels : [activeModel];
+    WebviewManager.reconcile(currentActiveModels);
+  }, [isCompareMode, activeModel, selectedModels]);
 
   const handleSendMessage = useCallback(async (content: string, model: AIModel) => {
     const userMsg: Message = {

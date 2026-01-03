@@ -115,8 +115,8 @@ export const useWebviewWindow = (model: AIModel, isActive: boolean): UseWebviewW
         height: Math.round(rect.height),
       });
 
-      // Register with Manager
-      WebviewManager.register(label, webview);
+      // Register with Manager - PASS MODEL ID NOW
+      WebviewManager.register(label, webview, model);
       webviewRef.current = webview;
 
       // Event listeners
