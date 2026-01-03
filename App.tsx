@@ -8,12 +8,18 @@ import {
   Save,
   Eye,
   EyeOff,
-  MousePointerClick
+  MousePointerClick,
+  MessageSquare,
+  Plus,
+  Trash2,
+  History,
+  Menu
 } from 'lucide-react';
 import ChatWindow from './components/ChatWindow';
 import { AIModel, Message, AppSettings } from './types';
 import { streamGeminiResponse } from './services/gemini';
 import { WebviewManager } from './services/WebviewManager';
+import { useChatHistory } from './hooks/useChatHistory';
 
 // AI Model configurations with brand colors
 const AI_MODELS = [
@@ -155,6 +161,27 @@ const App: React.FC = () => {
   const [selectedModels, setSelectedModels] = useState<AIModel[]>([AIModel.CHATGPT, AIModel.CLAUDE]);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Chat History Hook
+  const {
+    sessions,
+    currentSessionId,
+    currentSession,
+    createNewSession,
+    selectSession,
+    deleteSession,
+    updateCurrentSessionMessages
+  } = useChatHistory();
+
+  // Initialize a new session if none exists
+  useEffect(() => {
+    if (sessions.length === 0 && !currentSessionId) {
+      createNewSession();
+    } else if (sessions.length > 0 && !currentSessionId) {
+      selectSession(sessions[0].id);
+    }
+  }, [sessions, currentSessionId, createNewSession, selectSession]);
 
   // Load settings from localStorage
   const [settings, setSettings] = useState<AppSettings>(() => {
@@ -169,7 +196,8 @@ const App: React.FC = () => {
   };
 
   // State for Gemini API chat
-  const [geminiMessages, setGeminiMessages] = useState<Message[]>([]);
+  // geminiMessages is now derived from currentSession
+  const geminiMessages = currentSession?.messages || [];
   const [isLoading, setIsLoading] = useState(false);
 
   // RECONCILE: Ensure only active model webviews are open
@@ -194,10 +222,15 @@ const App: React.FC = () => {
         return;
       }
 
-      setGeminiMessages(prev => [...prev, userMsg]);
+      if (!currentSessionId) {
+        createNewSession();
+      }
+
+      const newMessages = [...geminiMessages, userMsg];
+      updateCurrentSessionMessages(newMessages);
       setIsLoading(true);
 
-      const history = geminiMessages.map(m => ({
+      const history = newMessages.map(m => ({
         role: m.role === 'user' ? 'user' : 'model',
         parts: [{ text: m.content }]
       }));
@@ -212,76 +245,88 @@ const App: React.FC = () => {
         model: AIModel.GEMINI_API
       };
 
-      setGeminiMessages(prev => [...prev, initialAssistantMsg]);
+      const messagesWithAssistant = [...newMessages, initialAssistantMsg];
+      updateCurrentSessionMessages(messagesWithAssistant);
+
+      let assistantMessageContent = '';
 
       await streamGeminiResponse(
         content,
         history,
         (chunk) => {
-          setGeminiMessages(prev => {
-            return prev.map(msg => {
-              if (msg.id === assistantMsgId) {
-                return { ...msg, content: msg.content + chunk };
-              }
-              return msg;
-            });
-          });
+          assistantMessageContent += chunk;
+          updateCurrentSessionMessages(messagesWithAssistant.map(msg => {
+            if (msg.id === assistantMsgId) {
+              return { ...msg, content: assistantMessageContent };
+            }
+            return msg;
+          }));
         },
         settings.geminiApiKey
       );
 
       setIsLoading(false);
     }
-  }, [geminiMessages, settings.geminiApiKey]);
+  }, [geminiMessages, settings.geminiApiKey, currentSessionId, createNewSession, updateCurrentSessionMessages]);
 
   return (
     <div className="flex flex-col h-screen w-screen bg-[#0a0a0a] text-gray-200 overflow-hidden">
       {/* Tab bar with AI models, compare button, and settings */}
       <header className="shrink-0 h-12 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-2 z-50 relative">
-        {/* Left: AI Model tabs */}
-        <div className="flex items-center gap-1">
-          {AI_MODELS.map((model) => {
-            const Icon = model.icon;
-            const isActive = isCompareMode
-              ? selectedModels.includes(model.id)
-              : activeModel === model.id;
+        <div className="flex items-center gap-2">
+          {/* Sidebar Toggle */}
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="p-2 text-gray-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          >
+            <Menu size={18} />
+          </button>
 
-            return (
-              <button
-                key={model.id}
-                onClick={() => {
-                  if (isCompareMode) {
-                    setSelectedModels(prev => {
-                      if (prev.includes(model.id)) {
-                        return prev.length === 1 ? prev : prev.filter(id => id !== model.id);
-                      }
-                      const newSelection = [...prev, model.id];
-                      return newSelection.length > 2 ? newSelection.slice(1) : newSelection;
-                    });
-                  } else {
-                    setActiveModel(model.id);
-                    setIsCompareMode(false);
-                  }
-                }}
-                className={`
+          {/* Left: AI Model tabs */}
+          <div className="flex items-center gap-1">
+            {AI_MODELS.map((model) => {
+              const Icon = model.icon;
+              const isActive = isCompareMode
+                ? selectedModels.includes(model.id)
+                : activeModel === model.id;
+
+              return (
+                <button
+                  key={model.id}
+                  onClick={() => {
+                    if (isCompareMode) {
+                      setSelectedModels(prev => {
+                        if (prev.includes(model.id)) {
+                          return prev.length === 1 ? prev : prev.filter(id => id !== model.id);
+                        }
+                        const newSelection = [...prev, model.id];
+                        return newSelection.length > 2 ? newSelection.slice(1) : newSelection;
+                      });
+                    } else {
+                      setActiveModel(model.id);
+                      setIsCompareMode(false);
+                    }
+                  }}
+                  className={`
                   flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200
                   ${isActive
-                    ? `${model.activeColor} border text-white`
-                    : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent'
-                  }
+                      ? `${model.activeColor} border text-white`
+                      : 'text-gray-500 hover:text-gray-300 hover:bg-white/5 border border-transparent'
+                    }
                 `}
-              >
-                <Icon size={14} className={isActive ? 'text-white' : ''} />
-                <span className="text-sm font-medium">{model.name}</span>
-                {model.subtitle && (
-                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20' : 'bg-white/5'
-                    }`}>
-                    {model.subtitle}
-                  </span>
-                )}
-              </button>
-            );
-          })}
+                >
+                  <Icon size={14} className={isActive ? 'text-white' : ''} />
+                  <span className="text-sm font-medium">{model.name}</span>
+                  {model.subtitle && (
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${isActive ? 'bg-white/20' : 'bg-white/5'
+                      }`}>
+                      {model.subtitle}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Right: Compare mode toggle and Settings */}
@@ -324,32 +369,83 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content - no padding for webview models */}
-      <main className="flex-1 overflow-hidden">
-        {isCompareMode ? (
-          /* Compare Mode - Grid of all AI services */
-          <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3">
-            {AI_MODELS.filter(m => selectedModels.includes(m.id)).map((model) => (
-              <ChatWindow
-                key={`compare-${model.id}`}
-                model={model.id}
-                messages={model.id === AIModel.GEMINI_API ? geminiMessages : []}
-                onSendMessage={(c) => handleSendMessage(c, model.id)}
-                isLoading={isLoading && model.id === AIModel.GEMINI_API}
-              />
-            ))}
-          </div>
-        ) : (
-          /* Single Mode - Full width chat */
-          <ChatWindow
-            key={activeModel}
-            model={activeModel}
-            messages={activeModel === AIModel.GEMINI_API ? geminiMessages : []}
-            onSendMessage={(c) => handleSendMessage(c, activeModel)}
-            isLoading={isLoading && activeModel === AIModel.GEMINI_API}
-          />
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Sidebar */}
+        {isSidebarOpen && (
+          <aside className="w-64 bg-[#0f0f0f] border-r border-white/10 flex flex-col shrink-0 transition-all duration-300">
+            <div className="p-3">
+              <button
+                onClick={() => createNewSession()}
+                className="w-full flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors text-sm font-medium"
+              >
+                <Plus size={16} />
+                New Chat
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-2 space-y-1">
+              <div className="text-xs font-semibold text-gray-500 px-2 py-2 uppercase tracking-wider">
+                History
+              </div>
+              {sessions.map(session => (
+                <div
+                  key={session.id}
+                  className={`group flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer text-sm transition-colors ${currentSessionId === session.id
+                    ? 'bg-white/10 text-white'
+                    : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                    }`}
+                  onClick={() => selectSession(session.id)}
+                >
+                  <MessageSquare size={14} className="shrink-0" />
+                  <span className="truncate flex-1">{session.title}</span>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteSession(session.id);
+                    }}
+                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/10 rounded text-gray-500 hover:text-red-400 transition-all"
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+              {sessions.length === 0 && (
+                <div className="text-center py-8 text-gray-600 text-xs">
+                  No chat history
+                </div>
+              )}
+            </div>
+          </aside>
         )}
-      </main>
+
+        {/* Chat Area */}
+        <main className="flex-1 overflow-hidden relative">
+          {isCompareMode ? (
+            /* Compare Mode - Grid of all AI services */
+            <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3 p-3">
+              {AI_MODELS.filter(m => selectedModels.includes(m.id)).map((model) => (
+                <ChatWindow
+                  key={`compare-${model.id}`}
+                  model={model.id}
+                  messages={model.id === AIModel.GEMINI_API ? geminiMessages : []}
+                  onSendMessage={(c) => handleSendMessage(c, model.id)}
+                  isLoading={isLoading && model.id === AIModel.GEMINI_API}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Single Mode - Full width chat */
+            <ChatWindow
+              key={activeModel}
+              model={activeModel}
+              messages={activeModel === AIModel.GEMINI_API ? geminiMessages : []}
+              onSendMessage={(c) => handleSendMessage(c, activeModel)}
+              isLoading={isLoading && activeModel === AIModel.GEMINI_API}
+            />
+          )}
+        </main>
+      </div>
 
       {/* Settings Modal */}
       <SettingsModal

@@ -14,6 +14,15 @@ export interface Message {
   model: AIModel;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: number;
+  updatedAt: number;
+  model: AIModel;
+}
+
 export interface AppSettings {
   geminiApiKey: string;
 }

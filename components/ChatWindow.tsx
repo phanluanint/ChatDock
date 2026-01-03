@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Terminal, Loader2, Sparkles, User, AppWindow, Play, Key } from 'lucide-react';
+import { Send, Loader2, Sparkles, User, AppWindow, Play, Key } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -185,7 +185,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
               <Loader2 size={14} className="text-purple-400 animate-spin" />
             </div>
             <div className="bg-white/5 text-gray-500 px-4 py-2.5 rounded-2xl border border-white/10 rounded-tl-none text-xs italic">
-              Gemini is thinking...
+              Gemini is typing...
             </div>
           </div>
         )}
