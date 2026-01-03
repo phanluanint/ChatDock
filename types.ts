@@ -1,9 +1,9 @@
 
 export enum AIModel {
-  GEMINI = 'gemini',
+  GEMINI_API = 'gemini-api',
+  GEMINI_WEB = 'gemini-web',
   CHATGPT = 'chatgpt',
   CLAUDE = 'claude',
-  UNIFIED = 'unified'
 }
 
 export interface Message {
@@ -14,11 +14,6 @@ export interface Message {
   model: AIModel;
 }
 
-export interface ChatSession {
-  id: string;
-  model: AIModel;
-  messages: Message[];
-  title: string;
+export interface AppSettings {
+  geminiApiKey: string;
 }
-
-export type LayoutMode = 'single' | 'split' | 'grid';

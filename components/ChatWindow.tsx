@@ -1,7 +1,14 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Terminal, Loader2, Sparkles, User, ExternalLink } from 'lucide-react';
+import { Send, Terminal, Loader2, Sparkles, User, AppWindow, Play, Key } from 'lucide-react';
 import { AIModel, Message } from '../types';
+import EmbeddedWebview from './EmbeddedWebview';
+
+// Check if running in Tauri environment (v2 compatible)
+const checkIsTauri = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return '__TAURI_INTERNALS__' in window || '__TAURI__' in window;
+};
 
 interface ChatWindowProps {
   model: AIModel;
@@ -12,7 +19,21 @@ interface ChatWindowProps {
 
 const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage, isLoading }) => {
   const [input, setInput] = useState('');
+  const [isTauriEnv, setIsTauriEnv] = useState(false);
+  const [isWebviewActive, setIsWebviewActive] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Check Tauri environment on mount
+  useEffect(() => {
+    setIsTauriEnv(checkIsTauri());
+  }, []);
+
+  // Auto-load webview for web-based models in Tauri environment
+  useEffect(() => {
+    const isWebviewModel = model !== AIModel.GEMINI_API;
+    const shouldAutoLoad = isTauriEnv && isWebviewModel;
+    setIsWebviewActive(shouldAutoLoad);
+  }, [model, isTauriEnv]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -27,16 +48,30 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
     setInput('');
   };
 
-  const getModelUrl = () => {
-    switch(model) {
-      case AIModel.CHATGPT: return 'https://chatgpt.com';
-      case AIModel.CLAUDE: return 'https://claude.ai';
-      case AIModel.GEMINI: return 'https://gemini.google.com';
-      default: return '#';
+  const getModelTitle = () => {
+    switch (model) {
+      case AIModel.CHATGPT: return 'ChatGPT';
+      case AIModel.CLAUDE: return 'Claude';
+      case AIModel.GEMINI_WEB: return 'Gemini';
+      case AIModel.GEMINI_API: return 'Gemini API';
+      default: return model;
     }
   };
 
-  const isNativeSupport = model === AIModel.GEMINI;
+  const isNativeApiSupport = model === AIModel.GEMINI_API;
+  const canEmbedWebview = isTauriEnv && !isNativeApiSupport;
+
+  // Show embedded webview when active
+  if (isWebviewActive && canEmbedWebview) {
+    return (
+      <EmbeddedWebview
+        key={`webview-${model}`}
+        model={model}
+        isActive={true}
+        onClose={() => setIsWebviewActive(false)}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-col h-full glass rounded-2xl border border-white/10 overflow-hidden group">
@@ -45,56 +80,89 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
           <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">
-            {model === AIModel.UNIFIED ? 'Universal Prompt' : model}
+            {getModelTitle()}
           </span>
+          {isNativeApiSupport && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
+              <Key size={10} className="inline mr-1" />API
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3">
-          <a 
-            href={getModelUrl()} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-gray-500 hover:text-white transition-colors"
-          >
-            <ExternalLink size={14} />
-          </a>
+          {canEmbedWebview && (
+            <button
+              onClick={() => setIsWebviewActive(true)}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+              title={`Load ${getModelTitle()} inside`}
+            >
+              <Play size={12} />
+              Load Site
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" ref={scrollRef}>
-        {!isNativeSupport && messages.length === 0 && (
+        {!isNativeApiSupport && messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto">
-            <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">
-              <Terminal className="text-gray-600" size={32} />
+            <div className="w-16 h-16 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full flex items-center justify-center mb-4 border border-indigo-500/30">
+              <AppWindow className="text-indigo-400" size={32} />
             </div>
-            <h3 className="text-lg font-semibold text-gray-300 mb-2">Web View Preview</h3>
-            <p className="text-sm text-gray-500">
-              Browser constraints prevent loading {model} directly in an iframe. In the native OmniHub Tauri app, this would be a full live session.
+            <h3 className="text-lg font-semibold text-gray-300 mb-2">
+              {isTauriEnv ? `Load ${getModelTitle()}` : 'Web View Preview'}
+            </h3>
+            <p className="text-sm text-gray-500 mb-2">
+              {isTauriEnv
+                ? `Click below to load ${getModelTitle()} directly inside this panel.`
+                : `Browser constraints prevent loading ${model} directly. In the native app, this would be a full live session.`
+              }
             </p>
-            <button 
-              onClick={() => window.open(getModelUrl(), '_blank')}
-              className="mt-6 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-medium transition-all"
+            <button
+              onClick={() => {
+                if (canEmbedWebview) {
+                  setIsWebviewActive(true);
+                }
+              }}
+              className="mt-6 px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl text-sm font-medium transition-all flex items-center gap-2 shadow-lg shadow-indigo-500/20"
             >
-              Open External Site
+              <Play size={16} />
+              Load {getModelTitle()} Here
             </button>
           </div>
         )}
 
+        {isNativeApiSupport && messages.length === 0 && (
+          <div className="h-full flex flex-col items-center justify-center text-center max-w-sm mx-auto">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-500/20 to-indigo-500/20 rounded-full flex items-center justify-center mb-4 border border-purple-500/30">
+              <Key className="text-purple-400" size={32} />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-300 mb-2">
+              Gemini API Chat
+            </h3>
+            <p className="text-sm text-gray-500 mb-2">
+              Chat directly with Gemini using your API key.
+            </p>
+            <p className="text-xs text-gray-600">
+              Start typing below to begin a conversation
+            </p>
+          </div>
+        )}
+
         {messages.map((msg) => (
-          <div 
-            key={msg.id} 
+          <div
+            key={msg.id}
             className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
           >
             {msg.role !== 'user' && (
-              <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center shrink-0 border border-indigo-500/20">
-                <Sparkles size={14} className="text-indigo-400" />
+              <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/20">
+                <Sparkles size={14} className="text-purple-400" />
               </div>
             )}
-            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${
-              msg.role === 'user' 
-                ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg' 
-                : 'bg-white/5 text-gray-300 border border-white/10 rounded-tl-none'
-            }`}>
+            <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${msg.role === 'user'
+              ? 'bg-indigo-600 text-white rounded-tr-none shadow-lg'
+              : 'bg-white/5 text-gray-300 border border-white/10 rounded-tl-none'
+              }`}>
               {msg.content}
             </div>
             {msg.role === 'user' && (
@@ -106,12 +174,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
         ))}
 
         {isLoading && (
-          <div className="flex gap-3 justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <div className="w-8 h-8 rounded-lg bg-indigo-600/20 flex items-center justify-center shrink-0 border border-indigo-500/20">
-              <Loader2 size={14} className="text-indigo-400 animate-spin" />
+          <div className="flex gap-3 justify-start">
+            <div className="w-8 h-8 rounded-lg bg-purple-600/20 flex items-center justify-center shrink-0 border border-purple-500/20">
+              <Loader2 size={14} className="text-purple-400 animate-spin" />
             </div>
             <div className="bg-white/5 text-gray-500 px-4 py-2.5 rounded-2xl border border-white/10 rounded-tl-none text-xs italic">
-              AI is thinking...
+              Gemini is thinking...
             </div>
           </div>
         )}
@@ -119,31 +187,27 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
 
       {/* Input Area */}
       <div className="p-4 bg-black/20 border-t border-white/10">
-        <form onSubmit={handleSubmit} className="relative group/input">
+        <form onSubmit={handleSubmit} className="relative">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={isLoading || (!isNativeSupport && model !== AIModel.UNIFIED)}
+            disabled={isLoading || !isNativeApiSupport}
             placeholder={
-                !isNativeSupport && model !== AIModel.UNIFIED 
-                ? `Interaction restricted in preview...` 
-                : `Type your request for ${model}...`
+              !isNativeApiSupport
+                ? `Use the embedded view above to chat...`
+                : `Ask Gemini anything...`
             }
-            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all disabled:opacity-50"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading || (!isNativeSupport && model !== AIModel.UNIFIED)}
-            className="absolute right-2 top-1.5 p-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-all disabled:opacity-50 disabled:bg-gray-700"
+            disabled={!input.trim() || isLoading || !isNativeApiSupport}
+            className="absolute right-2 top-1.5 p-2 bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition-all disabled:opacity-50 disabled:bg-gray-700"
           >
             <Send size={18} />
           </button>
         </form>
-        <div className="mt-2 flex items-center gap-4 text-[10px] text-gray-600 font-medium tracking-wide px-1">
-          <span className="flex items-center gap-1"><Terminal size={10}/> CMD+K for shortcuts</span>
-          <span className="flex items-center gap-1"><Sparkles size={10}/> Gemini 1.5 Pro</span>
-        </div>
       </div>
     </div>
   );
