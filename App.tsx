@@ -7,7 +7,7 @@ import {
   X,
   MousePointerClick,
 } from 'lucide-react';
-import ChatWindow from './components/ChatWindow';
+import ChatWebview from './components/ChatWebview';
 import { AIModel } from './types';
 import { WebviewManager } from './services/WebviewManager';
 
@@ -133,7 +133,7 @@ const App: React.FC = () => {
             /* Compare Mode - Grid of all AI services */
             <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3 p-3">
               {AI_MODELS.filter(m => selectedModels.includes(m.id)).map((model) => (
-                <ChatWindow
+                <ChatWebview
                   key={`compare-${model.id}`}
                   model={model.id}
                 />
@@ -141,7 +141,7 @@ const App: React.FC = () => {
             </div>
           ) : (
             /* Single Mode - Full width chat */
-            <ChatWindow
+            <ChatWebview
               key={activeModel}
               model={activeModel}
             />
