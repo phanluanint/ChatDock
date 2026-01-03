@@ -1,6 +1,5 @@
 
 export enum AIModel {
-  GEMINI_API = 'gemini-api',
   GEMINI_WEB = 'gemini-web',
   CHATGPT = 'chatgpt',
   CLAUDE = 'claude',
@@ -23,6 +22,4 @@ export interface ChatSession {
   model: AIModel;
 }
 
-export interface AppSettings {
-  geminiApiKey: string;
-}
+// AppSettings interface removed - no longer needed without Gemini API

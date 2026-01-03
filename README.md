@@ -22,9 +22,8 @@
 
 - **Unified Interface**: Access multiple AI models (ChatGPT, Claude, Gemini) without tab switching.
 - **Compare Mode**: Run prompts in parallel across different models to compare responses side-by-side.
-- **Privacy First**: Built with [Tauri](https://tauri.app/), your data stays local. API keys are stored securely on your device.
+- **Privacy First**: Built with [Tauri](https://tauri.app/), your data stays local.
 - **Modern UI**: specialized dark mode design with glassmorphism effects for a premium desktop experience.
-- **Flexible Integration**: Supports both web-view based interaction and direct API integration (Gemini).
 
 ## Screenshots
 
@@ -74,12 +73,6 @@ Ensure you have the following installed:
    ```bash
    npm run tauri:dev
    ```
-
-4. **Configure Gemini API**
-   To use Gemini via API:
-   - Get your key from [Google AI Studio](https://makersuite.google.com/app/apikey).
-   - Click the **Settings** (gear icon) in the app top-right corner.
-   - Enter your API Key.
 
 ## 📦 Building for Production
 
