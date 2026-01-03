@@ -1,6 +1,6 @@
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
-import { Loader2, X, ExternalLink } from 'lucide-react';
+import { Loader2, X } from 'lucide-react';
 import { AIModel } from '../types';
 
 interface EmbeddedWebviewProps {
@@ -67,10 +67,30 @@ const EmbeddedWebview: React.FC<EmbeddedWebviewProps> = ({ model, isActive, onCl
       console.log('Webview created, waiting for events...');
 
       // Set up event listeners
-      const createdUnlisten = await webview.once('tauri://created', () => {
+      const createdUnlisten = await webview.once('tauri://created', async () => {
         console.log('Webview created successfully');
         webviewRef.current = webview;
         setStatus('ready');
+
+        // Ensure correct position after creation (sometimes initial position is off)
+        setTimeout(async () => {
+          if (containerRef.current && webviewRef.current) {
+            const newRect = containerRef.current.getBoundingClientRect();
+            console.log('Correcting position:', newRect);
+            try {
+              await webviewRef.current.setPosition({
+                x: Math.round(newRect.left),
+                y: Math.round(newRect.top)
+              });
+              await webviewRef.current.setSize({
+                width: Math.round(newRect.width),
+                height: Math.round(newRect.height)
+              });
+            } catch (err) {
+              console.error('Position correction failed:', err);
+            }
+          }
+        }, 100);
       });
 
       const errorUnlisten = await webview.once('tauri://error', (e: any) => {
@@ -195,52 +215,11 @@ const EmbeddedWebview: React.FC<EmbeddedWebviewProps> = ({ model, isActive, onCl
   }, [status]);
 
   return (
-    <div className="flex flex-col h-full glass rounded-2xl border border-white/10 overflow-hidden">
-      {/* Header Bar */}
-      <div className="px-4 py-2 border-b border-white/10 bg-black/60 flex items-center justify-between shrink-0 z-10">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${status === 'ready' ? 'bg-emerald-500' :
-            status === 'loading' ? 'bg-amber-500 animate-pulse' :
-              'bg-red-500'
-            }`} />
-          <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">
-            {getModelTitle(model)}
-          </span>
-          {status === 'loading' && (
-            <span className="text-[10px] text-amber-500 font-medium">(Loading...)</span>
-          )}
-          {status === 'ready' && (
-            <span className="text-[10px] text-emerald-500 font-medium">(Live)</span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleOpenExternal}
-            className="p-1.5 text-gray-500 hover:text-white transition-colors"
-            title="Open in browser"
-          >
-            <ExternalLink size={14} />
-          </button>
-          {onClose && (
-            <button
-              onClick={() => {
-                destroyWebview();
-                onClose();
-              }}
-              className="p-1.5 text-gray-500 hover:text-red-400 transition-colors"
-              title="Close"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
-      </div>
-
+    <div className="h-full w-full overflow-hidden bg-[#0a0a0a] mt-8">
       {/* Webview Container - this is where the native webview will be positioned */}
       <div
         ref={containerRef}
-        className="flex-1 relative"
-        style={{ minHeight: '400px', backgroundColor: '#fff' }}
+        className="h-[calc(100vh-3rem)] w-full relative bg-[#0a0a0a]"
       >
         {status === 'loading' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0a] z-20">

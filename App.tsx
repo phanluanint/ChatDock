@@ -2,16 +2,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   Sparkles,
-  Settings,
-  Bot,
-  Zap,
+  Settings, Zap,
   LayoutGrid,
-  X,
-  Globe,
-  Key,
+  X, Key,
   Save,
   Eye,
-  EyeOff
+  EyeOff,
+  MousePointerClick
 } from 'lucide-react';
 import ChatWindow from './components/ChatWindow';
 import { AIModel, Message, AppSettings } from './types';
@@ -20,13 +17,12 @@ import { getGeminiResponse } from './services/gemini';
 // AI Model configurations with brand colors
 const AI_MODELS = [
   {
-    id: AIModel.GEMINI_API,
-    name: 'Gemini',
-    subtitle: 'API',
-    icon: Key,
-    color: 'from-purple-500 to-indigo-400',
-    activeColor: 'bg-gradient-to-r from-purple-500/20 to-indigo-400/20 border-purple-500/50',
-    isWebview: false,
+    id: AIModel.CHATGPT,
+    name: 'ChatGPT',
+    icon: MousePointerClick,
+    color: 'from-emerald-500 to-teal-400',
+    activeColor: 'bg-gradient-to-r from-emerald-500/20 to-teal-400/20 border-emerald-500/50',
+    isWebview: true,
   },
   {
     id: AIModel.CLAUDE,
@@ -37,21 +33,22 @@ const AI_MODELS = [
     isWebview: true,
   },
   {
-    id: AIModel.CHATGPT,
-    name: 'ChatGPT',
-    icon: Bot,
-    color: 'from-emerald-500 to-teal-400',
-    activeColor: 'bg-gradient-to-r from-emerald-500/20 to-teal-400/20 border-emerald-500/50',
-    isWebview: true,
-  },
-  {
     id: AIModel.GEMINI_WEB,
     name: 'Gemini',
     subtitle: 'Web',
-    icon: Globe,
+    icon: Sparkles,
     color: 'from-blue-500 to-cyan-400',
     activeColor: 'bg-gradient-to-r from-blue-500/20 to-cyan-400/20 border-blue-500/50',
     isWebview: true,
+  },
+  {
+    id: AIModel.GEMINI_API,
+    name: 'Gemini',
+    subtitle: 'API',
+    icon: Key,
+    color: 'from-purple-500 to-indigo-400',
+    activeColor: 'bg-gradient-to-r from-purple-500/20 to-indigo-400/20 border-purple-500/50',
+    isWebview: false,
   },
 ];
 
@@ -153,7 +150,7 @@ const SettingsModal: React.FC<{
 };
 
 const App: React.FC = () => {
-  const [activeModel, setActiveModel] = useState<AIModel>(AIModel.CLAUDE);
+  const [activeModel, setActiveModel] = useState<AIModel>(AIModel.GEMINI_API);
   const [isCompareMode, setIsCompareMode] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -215,7 +212,7 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col h-screen w-screen bg-[#0a0a0a] text-gray-200 overflow-hidden">
       {/* Tab bar with AI models, compare button, and settings */}
-      <header className="shrink-0 h-12 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-2">
+      <header className="shrink-0 h-12 border-b border-white/10 bg-black/40 backdrop-blur-xl flex items-center justify-between px-2 z-50 relative">
         {/* Left: AI Model tabs */}
         <div className="flex items-center gap-1">
           {AI_MODELS.map((model) => {
@@ -280,8 +277,8 @@ const App: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-hidden p-3">
+      {/* Main Content - no padding for webview models */}
+      <main className="flex-1 overflow-hidden">
         {isCompareMode ? (
           /* Compare Mode - Grid of all AI services */
           <div className="h-full w-full grid grid-cols-1 md:grid-cols-2 gap-3">

@@ -74,34 +74,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({ model, messages, onSendMessage,
   }
 
   return (
-    <div className="flex flex-col h-full glass rounded-2xl border border-white/10 overflow-hidden group">
-      {/* Window Header */}
-      <div className="px-4 py-3 border-b border-white/10 bg-black/40 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isLoading ? 'bg-amber-500 animate-pulse' : 'bg-emerald-500'}`} />
-          <span className="text-xs font-bold text-gray-400 tracking-wide uppercase">
-            {getModelTitle()}
-          </span>
-          {isNativeApiSupport && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-400 border border-purple-500/30">
-              <Key size={10} className="inline mr-1" />API
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-3">
-          {canEmbedWebview && (
-            <button
-              onClick={() => setIsWebviewActive(true)}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-500 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-              title={`Load ${getModelTitle()} inside`}
-            >
-              <Play size={12} />
-              Load Site
-            </button>
-          )}
-        </div>
-      </div>
-
+    <div className="flex flex-col h-full glass border border-white/10 overflow-hidden group">
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar" ref={scrollRef}>
         {!isNativeApiSupport && messages.length === 0 && (
