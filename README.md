@@ -1,7 +1,7 @@
 # ChatDock
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" alt="ChatDock Banner" width="100%" />
+  <img src="screenshots/side-by-side-action.png" alt="ChatDock Banner - Side by side action" width="100%" />
   <br />
   <br />
 
@@ -25,6 +25,21 @@
 - **Privacy First**: Built with [Tauri](https://tauri.app/), your data stays local. API keys are stored securely on your device.
 - **Modern UI**: specialized dark mode design with glassmorphism effects for a premium desktop experience.
 - **Flexible Integration**: Supports both web-view based interaction and direct API integration (Gemini).
+
+## Screenshots
+
+<div align="center">
+  <img src="screenshots/chatdock.png" alt="ChatDock Interface" width="100%" />
+  <p><em>Unified Interface</em></p>
+  <br />
+
+  <img src="screenshots/side-by-side.png" alt="Compare Mode" width="100%" />
+  <p><em>Side-by-Side Comparison</em></p>
+  <br />
+
+  <img src="screenshots/chatgpt.png" alt="ChatGPT Integration" width="100%" />
+  <p><em>ChatGPT Integration</em></p>
+</div>
 
 ## 🛠 Tech Stack
 
