@@ -291,7 +291,7 @@ const App: React.FC = () => {
             title="Compare AI responses"
           >
             {isCompareMode ? <X size={14} /> : <LayoutGrid size={14} />}
-            <span className="hidden sm:inline">{isCompareMode ? 'Exit' : 'Compare'}</span>
+            <span className="hidden sm:inline">{isCompareMode ? 'Exit' : 'Side by side'}</span>
           </button>
 
           {/* Only show settings for Gemini API mode */}
