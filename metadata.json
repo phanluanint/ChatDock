@@ -1,0 +1,7 @@
+{
+  "name": "OmniChat Hub",
+  "description": "A sophisticated multi-model chat dashboard allowing users to interact with Gemini and visualize layouts for ChatGPT and Claude in a unified workstation environment.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
