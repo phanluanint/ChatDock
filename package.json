@@ -1,12 +1,15 @@
 {
-  "name": "omni-ai",
+  "name": "chatdock",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --port 3000",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev",
+    "tauri:build": "tauri build"
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
@@ -17,6 +20,7 @@
     "react-dom": "^19.2.3"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.9.1",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
