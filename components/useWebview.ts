@@ -15,6 +15,7 @@ const MODEL_URLS: Record<AIModel, string> = {
   [AIModel.CHATGPT]: 'https://chatgpt.com',
   [AIModel.CLAUDE]: 'https://claude.ai',
   [AIModel.GEMINI_WEB]: 'https://gemini.google.com',
+  [AIModel.NOTEBOOK_LLM]: 'https://notebooklm.google.com',
 };
 
 export const useWebview = (model: AIModel, isActive: boolean): UseWebviewResult => {

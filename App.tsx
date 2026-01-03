@@ -37,6 +37,14 @@ const AI_MODELS = [
     activeColor: 'bg-gradient-to-r from-blue-500/20 to-cyan-400/20 border-blue-500/50',
     isWebview: true,
   },
+  {
+    id: AIModel.NOTEBOOK_LLM,
+    name: 'Notebook LLM',
+    icon: Sparkles,
+    color: 'from-blue-500 to-cyan-400',
+    activeColor: 'bg-gradient-to-r from-blue-500/20 to-cyan-400/20 border-blue-500/50',
+    isWebview: true,
+  }
 ];
 
 const App: React.FC = () => {
